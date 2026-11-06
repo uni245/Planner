@@ -1,0 +1,1512 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
+<title>Game Planner · 블루아카이브 · 스텔라소라 · 이터널 리턴</title>
+<script>
+/* 첫 페인트 전에 저장된 테마를 적용해 깜빡임 방지 */
+try {
+  var __s = JSON.parse(localStorage.getItem('gamePlanner.v1') || 'null');
+  if (__s && __s.settings && (__s.settings.theme === 'light' || __s.settings.theme === 'dark')) {
+    document.documentElement.setAttribute('data-theme', __s.settings.theme);
+  }
+} catch (e) {}
+</script>
+<style>
+@property --accent  { syntax: '<color>'; inherits: true; initial-value: #7b8cff; }
+@property --accent2 { syntax: '<color>'; inherits: true; initial-value: #4fd1c5; }
+
+:root {
+  --ba: #38b6ff;  --ba2: #5a7dff;   /* 블루아카이브: 스카이 블루 */
+  --ss: #b48cff;  --ss2: #ff8ccf;   /* 스텔라소라: 바이올렛 → 핑크 */
+  --er: #e0b45c;  --er2: #5f78a8;   /* 이터널 리턴: 메탈릭 골드 + 스틸 네이비 */
+  --radius: 16px;
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  --font: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+}
+:root[data-theme="dark"] {
+  --bg: #0a0d15; --bg-side: #0e121c;
+  --surface: #131827; --surface2: #1a2033; --surface3: #252d45;
+  --border: rgba(255,255,255,.07); --border-strong: rgba(255,255,255,.15);
+  --text: #e9ecf5; --muted: #98a1b8; --faint: #667089;
+  --shadow: 0 10px 30px rgba(0,0,0,.35);
+  --all: #7b8cff; --all2: #4fd1c5;
+  --on-accent: #0b0f1a;
+  --danger: #ff6b6b;
+  color-scheme: dark;
+}
+:root[data-theme="light"] {
+  --ba: #0a8ee0; --ba2: #4a63e8;
+  --ss: #8b5cf6; --ss2: #e0529f;
+  --er: #a8741a; --er2: #3d5588;
+  --bg: #eef1f7; --bg-side: #ffffff;
+  --surface: #ffffff; --surface2: #f3f5fb; --surface3: #e5e9f3;
+  --border: rgba(15,23,42,.08); --border-strong: rgba(15,23,42,.18);
+  --text: #151b2e; --muted: #596280; --faint: #8a93a9;
+  --shadow: 0 8px 24px rgba(30,41,80,.10);
+  --all: #5565e8; --all2: #19a79b;
+  --on-accent: #ffffff;
+  --danger: #d93a3a;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+html.theme-anim *, html.theme-anim *::before, html.theme-anim *::after {
+  transition: background-color .35s ease, border-color .35s ease, color .35s ease, fill .35s ease, stroke .35s ease !important;
+}
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.5;
+  background: var(--bg);
+  color: var(--text);
+  --accent: var(--all);
+  --accent2: var(--all2);
+  transition: --accent .5s ease, --accent2 .5s ease;
+  -webkit-font-smoothing: antialiased;
+}
+body[data-filter="ba"] { --accent: var(--ba); --accent2: var(--ba2); }
+body[data-filter="ss"] { --accent: var(--ss); --accent2: var(--ss2); }
+body[data-filter="er"] { --accent: var(--er); --accent2: var(--er2); }
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(900px 480px at 88% -8%, color-mix(in srgb, var(--accent) 17%, transparent), transparent 62%),
+    radial-gradient(720px 440px at -6% 108%, color-mix(in srgb, var(--accent2) 13%, transparent), transparent 62%);
+}
+button, input, select, textarea { font-family: inherit; color: inherit; }
+button { -webkit-tap-highlight-color: transparent; }
+h1, h2, h3, p { margin: 0; }
+ul { margin: 0; padding: 0; list-style: none; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+.g-ba { --c: var(--ba); --c2: var(--ba2); }
+.g-ss { --c: var(--ss); --c2: var(--ss2); }
+.g-er { --c: var(--er); --c2: var(--er2); }
+
+.ic { width: 1.15em; height: 1.15em; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; vertical-align: -0.2em; }
+
+/* ---------- 게임 아이콘 (1:1) ---------- */
+.gicon {
+  --s: 36px; position: relative; flex: none; width: var(--s); height: var(--s); aspect-ratio: 1 / 1;
+  border-radius: calc(var(--s) * .28); overflow: hidden; display: grid; place-items: center;
+  background: linear-gradient(135deg, var(--c), var(--c2)); color: #fff;
+  font-weight: 800; font-size: calc(var(--s) * .34); letter-spacing: -.02em;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), 0 4px 14px color-mix(in srgb, var(--c) 30%, transparent);
+}
+.g-er .gicon { background: linear-gradient(135deg, #27344f, #7f93bb 62%, #e0b45c); }
+.gicon img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: var(--surface3); }
+.gicon.all { background: linear-gradient(135deg, var(--surface3), var(--surface2)); color: var(--text); box-shadow: inset 0 0 0 1px var(--border-strong); }
+.gicon .ic { width: 52%; height: 52%; }
+
+/* ---------- 레이아웃 ---------- */
+.app { display: grid; grid-template-columns: 276px minmax(0, 1fr); min-height: 100vh; }
+.sidebar {
+  position: sticky; top: 0; height: 100vh; height: 100dvh; overflow-y: auto;
+  background: var(--bg-side); border-right: 1px solid var(--border);
+  padding: 20px 14px; display: flex; flex-direction: column; gap: 24px; z-index: 50;
+}
+.brand { display: flex; align-items: center; gap: 12px; padding: 2px 8px; }
+.brand-mark { width: 42px; height: 42px; padding: 2px; border-radius: 13px; background: conic-gradient(from 200deg, var(--ba), var(--ss), var(--er), var(--ba)); flex: none; }
+.brand-mark span { width: 100%; height: 100%; border-radius: 11px; background: var(--bg-side); display: grid; place-items: center; color: var(--text); }
+.brand-mark .ic { width: 20px; height: 20px; }
+.brand b { display: block; font-size: 17px; letter-spacing: -.02em; line-height: 1.2; }
+.brand small { color: var(--muted); font-size: 12px; }
+.side-label { font-size: 11px; font-weight: 700; letter-spacing: .08em; color: var(--faint); text-transform: uppercase; padding: 0 10px 8px; }
+.nav-btn {
+  display: flex; align-items: center; gap: 12px; width: 100%; padding: 9px 10px; margin-bottom: 4px;
+  border-radius: 14px; border: 1px solid transparent; background: none; color: var(--muted);
+  cursor: pointer; text-align: left; transition: background .2s, border-color .2s, color .2s, transform .2s var(--ease);
+}
+.nav-btn:hover { background: var(--surface2); color: var(--text); transform: translateX(2px); }
+.nav-btn[aria-current="true"] {
+  background: color-mix(in srgb, var(--c, var(--accent)) 14%, transparent);
+  border-color: color-mix(in srgb, var(--c, var(--accent)) 42%, transparent);
+  color: var(--text);
+}
+.nav-txt { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+.nav-txt b { font-size: 14px; }
+.nav-txt small { font-size: 11.5px; color: var(--faint); }
+.badge { margin-left: auto; min-width: 26px; height: 22px; padding: 0 7px; border-radius: 99px; display: grid; place-items: center; font-size: 12px; font-weight: 700; background: var(--surface3); color: var(--muted); font-variant-numeric: tabular-nums; }
+.nav-btn[aria-current="true"] .badge { background: var(--c, var(--accent)); color: var(--on-accent); }
+.tool-btn { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 12px; border: none; background: none; color: var(--muted); border-radius: 10px; cursor: pointer; font-size: 14px; text-align: left; transition: background .2s, color .2s; }
+.tool-btn:hover { background: var(--surface2); color: var(--text); }
+.tool-btn.danger:hover { color: var(--danger); }
+.side-foot { margin-top: auto; padding: 14px 12px; border-radius: 14px; background: var(--surface2); border: 1px solid var(--border); }
+.side-foot label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.side-foot small { display: block; margin-top: 8px; font-size: 11.5px; color: var(--faint); line-height: 1.45; }
+.scrim { display: none; }
+
+.main { min-width: 0; }
+.topbar {
+  position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 12px;
+  padding: 14px 28px; background: color-mix(in srgb, var(--bg) 78%, transparent);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--border);
+}
+.top-date { display: flex; flex-direction: column; line-height: 1.2; }
+.top-date b { font-size: 17px; letter-spacing: -.02em; }
+.top-date small { color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.spacer { flex: 1; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 99px; font-size: 12.5px; font-weight: 600; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); white-space: nowrap; }
+.pill.accent { background: var(--accent); border-color: transparent; color: var(--on-accent); }
+.menu-btn { display: none; }
+
+.container { max-width: 1480px; margin: 0 auto; padding: 24px 28px calc(60px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 26px; }
+.container.swap > * { animation: rise .5s var(--ease) both; }
+.container.swap > *:nth-child(2) { animation-delay: .05s; }
+.container.swap > *:nth-child(3) { animation-delay: .1s; }
+.container.swap > *:nth-child(4) { animation-delay: .15s; }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+
+/* ---------- 버튼 ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 16px;
+  border-radius: 12px; border: 1px solid var(--border-strong); background: var(--surface2); color: var(--text);
+  font: 600 14px var(--font); cursor: pointer; white-space: nowrap;
+  transition: transform .15s, background .2s, border-color .2s, box-shadow .2s, filter .2s;
+}
+.btn:hover { background: var(--surface3); }
+.btn:active { transform: scale(.97); }
+.btn.sm { height: 34px; padding: 0 12px; font-size: 13px; border-radius: 10px; }
+.btn.ghost { background: transparent; }
+.btn.primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); border-color: transparent; color: var(--on-accent); box-shadow: 0 6px 20px color-mix(in srgb, var(--accent) 32%, transparent); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.danger { color: var(--danger); background: transparent; border-color: color-mix(in srgb, var(--danger) 45%, transparent); }
+.btn.danger:hover { background: color-mix(in srgb, var(--danger) 12%, transparent); }
+.icon-btn { width: 38px; height: 38px; border-radius: 11px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); display: inline-grid; place-items: center; cursor: pointer; transition: background .2s, color .2s, transform .15s, border-color .2s; flex: none; }
+.icon-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--border-strong); }
+.icon-btn:active { transform: scale(.94); }
+.icon-btn.sm { width: 30px; height: 30px; border-radius: 9px; border-color: transparent; background: transparent; }
+.icon-btn.sm:hover.del { color: var(--danger); }
+.theme-btn .ic { transition: transform .5s var(--ease), opacity .3s; }
+.theme-btn .i-sun, .theme-btn .i-moon { position: absolute; }
+:root[data-theme="dark"] .theme-btn .i-moon { opacity: 0; transform: rotate(-90deg) scale(.5); }
+:root[data-theme="light"] .theme-btn .i-sun { opacity: 0; transform: rotate(90deg) scale(.5); }
+.theme-btn { position: relative; }
+.mini-btn { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--border-strong); background: var(--surface2); color: var(--text); border-radius: 9px; padding: 5px 10px; font-size: 12.5px; font-weight: 600; cursor: pointer; transition: background .2s; }
+.mini-btn:hover { background: var(--surface3); }
+
+/* ---------- 히어로 ---------- */
+.hero {
+  position: relative; overflow: hidden; padding: 22px 24px 20px; border-radius: 20px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 17%, var(--surface)), var(--surface) 62%);
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--border));
+  box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 20px;
+}
+.hero::after { content: ""; position: absolute; right: -60px; top: -60px; width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--accent) 28%, transparent), transparent 70%); pointer-events: none; }
+.hero-top { display: flex; align-items: center; gap: 18px; position: relative; z-index: 1; }
+.stack { display: flex; }
+.stack .gicon { margin-left: -14px; border: 3px solid var(--surface); box-sizing: content-box; }
+.stack .gicon:first-child { margin-left: 0; }
+.hero h1 { font-size: 26px; letter-spacing: -.03em; line-height: 1.2; }
+.hero p { color: var(--muted); font-size: 14px; margin-top: 3px; }
+.hero-top .btn { margin-left: auto; }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; position: relative; z-index: 1; }
+.stat { background: color-mix(in srgb, var(--surface) 78%, transparent); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+.stat > span { font-size: 12.5px; color: var(--muted); font-weight: 600; }
+.stat > b { font-size: 22px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.stat > b small { font-size: 13px; color: var(--muted); font-weight: 600; margin-left: 2px; }
+.bar { height: 6px; border-radius: 99px; background: var(--surface3); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, var(--c, var(--accent)), var(--c2, var(--accent2))); transition: width .55s var(--ease); }
+
+/* ---------- 섹션 ---------- */
+.sec-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.sec-head h2 { font-size: 16px; display: flex; align-items: center; gap: 8px; letter-spacing: -.01em; }
+.sec-head h2 .ic { color: var(--accent); }
+.sec-head .sub { color: var(--faint); font-size: 12.5px; font-weight: 500; }
+.head-actions { display: flex; gap: 8px; }
+
+/* ---------- D-Day 카드 ---------- */
+.dgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 14px; }
+.dcard {
+  position: relative; display: flex; align-items: center; gap: 14px; padding: 16px 16px 16px 20px; width: 100%;
+  text-align: left; font: inherit; color: inherit; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); cursor: pointer; overflow: hidden; box-shadow: var(--shadow);
+  transition: transform .25s var(--ease), border-color .25s, box-shadow .25s;
+}
+.dcard::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: linear-gradient(var(--c), var(--c2)); }
+.dcard:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--c) 50%, var(--border)); box-shadow: 0 14px 34px color-mix(in srgb, var(--c) 20%, transparent); }
+.dcard.empty { cursor: default; border-style: dashed; box-shadow: none; }
+.dcard.empty:hover { transform: none; box-shadow: none; }
+.dc-body { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
+.dc-game { font-size: 12px; color: var(--c); font-weight: 700; }
+.dc-title { font-size: 15.5px; font-weight: 700; letter-spacing: -.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dc-meta { font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dc-d { margin-left: auto; text-align: right; flex: none; padding-left: 6px; }
+.dc-d b { display: block; font-size: 27px; font-weight: 800; letter-spacing: -.03em; line-height: 1.1; color: var(--c); font-variant-numeric: tabular-nums; }
+.dc-d small { font-size: 11.5px; color: var(--muted); }
+.dcard.today .dc-d b { animation: pulse 1.8s ease-in-out infinite; }
+.dcard.live .dc-d b { font-size: 20px; }
+.muted { color: var(--muted); }
+@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+
+/* ---------- 메인 그리드 ---------- */
+.grid2 { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 24px; align-items: start; }
+.col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+/* ---------- 캘린더 ---------- */
+.cal { overflow: hidden; }
+.cal-bar { display: flex; align-items: center; gap: 10px; padding: 16px 18px 10px; flex-wrap: wrap; }
+.cal-bar h2 { font-size: 21px; letter-spacing: -.03em; margin-right: auto; font-variant-numeric: tabular-nums; }
+.legend { display: flex; gap: 12px; flex-wrap: wrap; padding: 0 18px 12px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); }
+.legend i { width: 9px; height: 9px; border-radius: 50%; background: var(--c); }
+.weekdays { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border-top: 1px solid var(--border); }
+.weekdays div { text-align: center; padding: 8px 0; font-size: 12px; font-weight: 700; color: var(--faint); }
+.weekdays div:first-child { color: #ff7d7d; }
+.weekdays div:last-child { color: #6ea8ff; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); border-top: 1px solid var(--border); }
+.cal-grid.anim { animation: slideIn .35s var(--ease); }
+@keyframes slideIn { from { opacity: 0; transform: translateX(calc(var(--dir, 1) * 22px)); } to { opacity: 1; transform: none; } }
+.cell { min-height: 116px; padding: 6px; display: flex; flex-direction: column; gap: 4px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); cursor: pointer; position: relative; min-width: 0; transition: background .15s; }
+.cell:nth-child(7n) { border-right: none; }
+.cell:nth-last-child(-n+7) { border-bottom: none; }
+.cell:hover { background: var(--surface2); }
+.cell.out { background: color-mix(in srgb, var(--surface2) 45%, transparent); }
+.cell.out .dnum { opacity: .4; }
+.cell.out .chip { opacity: .6; }
+.cell.selected { background: color-mix(in srgb, var(--accent) 10%, transparent); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 65%, transparent); }
+.cell-top { display: flex; align-items: center; justify-content: space-between; }
+.dnum { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; border: none; background: none; font-size: 13px; font-weight: 600; cursor: pointer; font-variant-numeric: tabular-nums; }
+.cell.sun .dnum { color: #ff7d7d; }
+.cell.sat .dnum { color: #6ea8ff; }
+.cell.today .dnum { background: var(--accent); color: var(--on-accent); font-weight: 800; }
+.cell-add { width: 22px; height: 22px; border-radius: 7px; border: none; background: var(--surface3); color: var(--muted); display: grid; place-items: center; cursor: pointer; opacity: 0; transition: opacity .15s, background .15s; padding: 0; }
+.cell:hover .cell-add, .cell-add:focus-visible { opacity: 1; }
+.cell-add:hover { background: var(--accent); color: var(--on-accent); }
+.cell-add .ic { width: 14px; height: 14px; }
+.chips { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.chip {
+  display: flex; align-items: center; gap: 4px; width: 100%; min-width: 0; padding: 2px 6px; border: none; border-left: 3px solid var(--c);
+  border-radius: 6px; font: inherit; font-size: 11.5px; line-height: 1.55; text-align: left; cursor: pointer; color: var(--text);
+  background: color-mix(in srgb, var(--c) 20%, transparent); transition: filter .15s, transform .15s;
+}
+.chip:hover { filter: brightness(1.18); transform: translateX(1px); }
+.chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip em { font-style: normal; opacity: .7; font-variant-numeric: tabular-nums; flex: none; }
+.chip .ic { width: 11px; height: 11px; flex: none; opacity: .85; }
+.chip.done { opacity: .5; text-decoration: line-through; }
+.chip { height: 22px; padding-top: 0; padding-bottom: 0; flex: none; }
+.chip.span { position: relative; z-index: 2; }
+.chip.cont-l { border-left-width: 0; border-top-left-radius: 0; border-bottom-left-radius: 0; padding-left: 9px; }
+.chip.cont-r { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.chip-gap { height: 22px; flex: none; pointer-events: none; }
+.more { font-size: 11px; color: var(--muted); padding: 0 4px; }
+.dots { display: none; gap: 3px; flex-wrap: wrap; justify-content: center; }
+.dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--c); }
+
+/* 선택일 패널 */
+.day-panel { border-top: 1px solid var(--border); padding: 18px; background: color-mix(in srgb, var(--surface2) 55%, transparent); }
+.day-panel.flash { animation: rise .35s var(--ease); }
+.dp-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.dp-head h3 { font-size: 17px; letter-spacing: -.02em; display: flex; align-items: center; gap: 8px; }
+.dp-head h3 .wd { color: var(--muted); font-weight: 500; }
+.dp-head p { color: var(--muted); font-size: 13px; }
+.ev-list { display: flex; flex-direction: column; gap: 8px; }
+.ev { display: flex; align-items: flex-start; gap: 12px; padding: 12px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--c); animation: rise .3s var(--ease) both; }
+.ev-main { flex: 1; min-width: 0; cursor: pointer; }
+.ev-title { font-weight: 700; letter-spacing: -.01em; word-break: break-word; }
+.ev.done .ev-title { text-decoration: line-through; color: var(--faint); }
+.ev-meta { display: flex; flex-wrap: wrap; gap: 6px 10px; margin-top: 5px; font-size: 12.5px; color: var(--muted); align-items: center; }
+.tag { display: inline-flex; align-items: center; gap: 6px; }
+.tag.g { color: var(--c); font-weight: 700; }
+.ev-memo { margin-top: 6px; font-size: 13px; color: var(--muted); white-space: pre-wrap; word-break: break-word; }
+.ev-actions { display: flex; gap: 2px; flex: none; }
+.empty-state { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; padding: 26px 10px; color: var(--muted); }
+.empty-state .ic { width: 34px; height: 34px; color: var(--faint); }
+
+/* ---------- 체크박스 / 숙제 ---------- */
+.chk { width: 22px; height: 22px; border-radius: 7px; border: 2px solid var(--border-strong); background: transparent; display: grid; place-items: center; color: transparent; cursor: pointer; flex: none; padding: 0; transition: background .2s, border-color .2s, transform .15s; }
+.chk:hover { border-color: var(--c, var(--accent)); }
+.chk:active { transform: scale(.88); }
+.chk .ic { width: 14px; height: 14px; stroke-width: 3.2; stroke-dasharray: 24; stroke-dashoffset: 24; transition: stroke-dashoffset .28s ease; }
+.chk[aria-checked="true"] { background: var(--c, var(--accent)); border-color: var(--c, var(--accent)); color: var(--on-accent); }
+.chk[aria-checked="true"] .ic { stroke-dashoffset: 0; }
+.cl { padding: 16px; position: relative; overflow: hidden; transition: border-color .3s, box-shadow .3s; }
+.cl::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: linear-gradient(90deg, var(--c), var(--c2)); }
+.cl.all-done { border-color: color-mix(in srgb, var(--c) 55%, var(--border)); box-shadow: 0 10px 30px color-mix(in srgb, var(--c) 16%, transparent); }
+.cl-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.cl-head b { display: block; font-size: 15px; letter-spacing: -.01em; line-height: 1.25; }
+.cl-count { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.cl.all-done .cl-count { color: var(--c); font-weight: 700; }
+.cl-head .icon-btn { margin-left: auto; }
+.tasks { margin-top: 8px; display: flex; flex-direction: column; gap: 2px; }
+.task { display: flex; align-items: center; gap: 10px; padding: 7px 6px; border-radius: 10px; transition: background .15s; }
+.task:hover { background: var(--surface2); }
+.t-title { flex: 1; min-width: 0; font-size: 14px; word-break: break-word; transition: color .2s; }
+.t-title[data-act] { cursor: pointer; }
+.task.done .t-title { color: var(--faint); text-decoration: line-through; }
+.counter { display: inline-flex; align-items: center; gap: 2px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 2px; flex: none; }
+.task.done .counter { border-color: var(--c); background: color-mix(in srgb, var(--c) 16%, transparent); }
+.cbtn { width: 22px; height: 22px; border: none; border-radius: 7px; background: transparent; color: var(--text); font-size: 15px; font-weight: 700; line-height: 1; cursor: pointer; transition: background .15s; }
+.cbtn:hover:not(:disabled) { background: var(--surface3); }
+.cbtn:disabled { opacity: .3; cursor: default; }
+.cval { min-width: 34px; text-align: center; font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.add-task { display: flex; gap: 6px; margin-top: 10px; }
+.add-task input[name="tname"] { flex: 1; min-width: 0; }
+.add-task input[name="tgoal"] { width: 62px; }
+.hint { font-size: 12.5px; color: var(--muted); display: flex; align-items: center; gap: 6px; margin: -4px 2px 2px; }
+.no-task { text-align: center; color: var(--faint); font-size: 13px; padding: 14px 0 6px; }
+
+/* 다가오는 일정 */
+.agenda { padding: 8px; }
+.ag { display: flex; align-items: center; gap: 12px; width: 100%; padding: 9px 10px; border: none; background: none; text-align: left; border-radius: 12px; cursor: pointer; font: inherit; color: inherit; transition: background .15s; }
+.ag:hover { background: var(--surface2); }
+.ag-date { width: 44px; flex: none; text-align: center; border-radius: 11px; padding: 4px 0; line-height: 1.15; background: color-mix(in srgb, var(--c) 16%, transparent); color: var(--c); }
+.ag-date small { display: block; font-size: 10.5px; font-weight: 700; }
+.ag-date b { font-size: 17px; font-variant-numeric: tabular-nums; }
+.ag-main { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
+.ag-main b { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ag-main small { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ag-d { font-size: 12.5px; font-weight: 800; color: var(--muted); flex: none; font-variant-numeric: tabular-nums; }
+.ag-d.today, .ag-d.live { color: var(--c); }
+.ag-d.soon { color: var(--c); }
+
+.foot-note { text-align: center; color: var(--faint); font-size: 12.5px; }
+
+/* ---------- 모달 ---------- */
+dialog.modal { width: min(580px, calc(100vw - 24px)); max-width: 100vw; padding: 0; border: 0; background: transparent; color: var(--text); overflow: visible; max-height: none; }
+dialog.modal::backdrop { background: rgba(5, 8, 15, .62); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
+dialog.modal[open] { animation: fade .2s ease; }
+dialog.modal[open] form { animation: pop .3s var(--ease); }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pop { from { opacity: 0; transform: translateY(14px) scale(.97); } to { opacity: 1; transform: none; } }
+.modal form { display: flex; flex-direction: column; max-height: calc(100dvh - 24px); background: var(--surface); border: 1px solid var(--border-strong); border-radius: 22px; box-shadow: 0 30px 80px rgba(0,0,0,.5); overflow: hidden; }
+.modal-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px 12px; }
+.modal-head h2 { font-size: 19px; letter-spacing: -.02em; }
+.modal-body { padding: 4px 20px 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+.modal-foot { display: flex; align-items: center; gap: 8px; padding: 14px 20px calc(16px + env(safe-area-inset-bottom)); border-top: 1px solid var(--border); background: var(--surface2); }
+.field { border: 0; padding: 0; margin: 0; min-width: 0; }
+.field > label, .field > legend { display: block; font-size: 12.5px; font-weight: 700; color: var(--muted); margin-bottom: 7px; padding: 0; }
+.field input[type="text"], .field input[type="date"], .field input[type="time"], .field input[type="number"], .field textarea, .field select, .add-task input, .side-foot select {
+  width: 100%; background: var(--surface2); border: 1px solid var(--border-strong); color: var(--text); border-radius: 11px; padding: 10px 12px; font-size: 14.5px; outline: none; transition: border-color .2s, box-shadow .2s;
+}
+.add-task input, .side-foot select { padding: 7px 10px; font-size: 13.5px; border-radius: 9px; }
+.field input:focus, .field textarea:focus, .field select:focus, .add-task input:focus, .side-foot select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+.field textarea { resize: vertical; min-height: 74px; }
+.row3 { display: grid; grid-template-columns: 1.2fr 1.2fr 1fr; gap: 10px; }
+.row3 .field label small { font-weight: 500; color: var(--faint); }
+.game-pick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.gp, .tp { position: relative; cursor: pointer; }
+.gp input, .tp input { position: absolute; opacity: 0; inset: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.gp-body { display: flex; flex-direction: column; align-items: center; gap: 7px; padding: 12px 6px 10px; border-radius: 14px; border: 1px solid var(--border-strong); font-size: 12.5px; font-weight: 600; color: var(--muted); transition: all .2s; text-align: center; }
+.gp:hover .gp-body { border-color: var(--c); }
+.gp input:checked + .gp-body { border-color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); color: var(--text); box-shadow: 0 0 0 1px var(--c); }
+.gp input:focus-visible + .gp-body, .tp input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.type-pick { display: flex; flex-wrap: wrap; gap: 8px; }
+.tp span { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 99px; border: 1px solid var(--border-strong); font-size: 13px; font-weight: 600; color: var(--muted); transition: all .2s; }
+.tp:hover span { color: var(--text); }
+.tp input:checked + span { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.check-inline { display: flex; align-items: center; gap: 10px; font-size: 14px; cursor: pointer; width: fit-content; }
+.check-inline input { width: 18px; height: 18px; accent-color: var(--accent); }
+.form-error { color: var(--danger); font-size: 13px; min-height: 0; }
+.form-error:empty { display: none; }
+
+/* ---------- 토스트 ---------- */
+.toasts { position: fixed; left: 50%; bottom: calc(22px + env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 200; width: min(460px, calc(100vw - 24px)); pointer-events: none; }
+.toast { pointer-events: auto; display: flex; align-items: center; gap: 12px; padding: 12px 14px 12px 16px; border-radius: 14px; background: var(--surface3); border: 1px solid var(--border-strong); box-shadow: 0 14px 40px rgba(0,0,0,.4); font-size: 14px; animation: toastIn .3s var(--ease); }
+.toast span { flex: 1; word-break: break-word; }
+.toast button { border: none; background: none; color: var(--accent); font-weight: 800; font-size: 13.5px; cursor: pointer; padding: 4px 6px; border-radius: 8px; }
+.toast button:hover { background: color-mix(in srgb, var(--accent) 15%, transparent); }
+.toast.out { opacity: 0; transform: translateY(8px); transition: all .25s; }
+@keyframes toastIn { from { opacity: 0; transform: translateY(14px) scale(.96); } to { opacity: 1; transform: none; } }
+
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- 반응형 ---------- */
+@media (max-width: 1180px) {
+  .grid2 { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 960px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .sidebar { position: fixed; left: 0; top: 0; width: 290px; max-width: 86vw; transform: translateX(-102%); transition: transform .3s var(--ease); box-shadow: 0 0 60px rgba(0,0,0,.5); }
+  .sidebar.open { transform: none; }
+  .scrim { display: block; position: fixed; inset: 0; background: rgba(0,0,0,.55); opacity: 0; pointer-events: none; transition: opacity .3s; z-index: 40; }
+  .scrim.show { opacity: 1; pointer-events: auto; }
+  .menu-btn { display: inline-grid; }
+  .topbar { padding: 12px 16px; }
+  .container { padding: 16px 16px calc(50px + env(safe-area-inset-bottom)); gap: 22px; }
+}
+@media (max-width: 640px) {
+  .hero { padding: 18px 16px 16px; }
+  .hero h1 { font-size: 21px; }
+  .hero-top { flex-wrap: wrap; }
+  .hero-top .btn { margin-left: 0; width: 100%; }
+  .stats { grid-template-columns: 1fr; }
+  .stat { flex-direction: row; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .stat > span { flex: 1; }
+  .stat .bar { width: 100%; order: 3; }
+  .hide-sm { display: none !important; }
+  .cal-bar { padding: 14px 12px 8px; }
+  .cal-bar h2 { font-size: 18px; }
+  .legend { padding: 0 12px 10px; }
+  .cell { min-height: 58px; padding: 4px 2px; align-items: center; gap: 3px; }
+  .chips { display: none; }
+  .dots { display: flex; }
+  .cell-add { display: none; }
+  .cell-top { justify-content: center; }
+  .day-panel { padding: 14px 12px; }
+  .row3 { grid-template-columns: 1fr 1fr; }
+  .row3 .field:last-child { grid-column: 1 / -1; }
+  dialog.modal { width: 100vw; margin: auto 0 0; }
+  .modal form { border-radius: 22px 22px 0 0; max-height: 92dvh; }
+  .ev { padding: 10px; }
+  .dcard { padding: 14px 14px 14px 18px; }
+}
+@media (hover: none) { .cell-add { display: none; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+}
+</style>
+</head>
+<body data-filter="all">
+
+<!-- 아이콘 스프라이트 (Lucide 스타일 SVG, 외부 CDN 없이 오프라인 동작) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+    <symbol id="i-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></symbol>
+    <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></symbol>
+    <symbol id="i-calcheck" viewBox="0 0 24 24"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+    <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94z"/></symbol>
+    <symbol id="i-gift" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></symbol>
+    <symbol id="i-swords" viewBox="0 0 24 24"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="m13 19 6-6"/><path d="m16 16 4 4"/><path d="m19 21 2-2"/><path d="M14.5 6.5 18 3h3v3l-3.5 3.5"/><path d="m5 14 4 4"/><path d="m7 17-3 3"/><path d="m3 19 2 2"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
+    <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></symbol>
+    <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
+  </defs>
+</svg>
+
+<div class="app" id="app">
+  <div class="scrim" id="scrim"></div>
+
+  <!-- ===== 사이드바 ===== -->
+  <aside class="sidebar" id="sidebar" aria-label="게임 선택">
+    <div class="brand">
+      <div class="brand-mark"><span><svg class="ic"><use href="#i-calcheck"/></svg></span></div>
+      <div><b>Game Planner</b><small>통합 게임 일정 관리</small></div>
+    </div>
+
+    <nav>
+      <div class="side-label">게임 필터</div>
+      <div id="gameNav"></div>
+    </nav>
+
+    <div>
+      <div class="side-label">데이터</div>
+      <button type="button" class="tool-btn" data-act="exportData"><svg class="ic"><use href="#i-download"/></svg>백업 내보내기 (JSON)</button>
+      <button type="button" class="tool-btn" data-act="importData"><svg class="ic"><use href="#i-upload"/></svg>백업 불러오기</button>
+      <button type="button" class="tool-btn danger" data-act="wipeData"><svg class="ic"><use href="#i-trash"/></svg>모든 데이터 초기화</button>
+    </div>
+
+    <div class="side-foot">
+      <label for="resetHour"><svg class="ic"><use href="#i-clock"/></svg> 일일 숙제 초기화 시각</label>
+      <select id="resetHour"></select>
+      <small>이 시각이 지나면 오늘의 숙제 체크가 자동으로 초기화돼요. 게임별 실제 초기화 시각에 맞춰 바꿔 쓰세요.</small>
+    </div>
+  </aside>
+
+  <!-- ===== 메인 ===== -->
+  <main class="main">
+    <header class="topbar">
+      <button type="button" class="icon-btn menu-btn" id="menuBtn" aria-label="메뉴 열기"><svg class="ic"><use href="#i-menu"/></svg></button>
+      <div class="top-date"><b id="topDate"></b><small id="topTime"></small></div>
+      <div class="spacer"></div>
+      <span class="pill hide-sm" id="resetPill"><svg class="ic"><use href="#i-reset"/></svg><span id="resetPillText"></span></span>
+      <button type="button" class="icon-btn theme-btn" id="themeBtn" aria-label="다크/라이트 모드 전환" title="다크/라이트 모드 전환">
+        <svg class="ic i-sun"><use href="#i-sun"/></svg>
+        <svg class="ic i-moon"><use href="#i-moon"/></svg>
+      </button>
+    </header>
+
+    <div class="container" id="container">
+      <section class="hero" id="hero" aria-label="요약"></section>
+
+      <section aria-labelledby="ddayTitle">
+        <div class="sec-head">
+          <h2 id="ddayTitle"><svg class="ic"><use href="#i-target"/></svg>D-Day 요약</h2>
+          <span class="sub" id="ddaySub"></span>
+        </div>
+        <div class="dgrid" id="dgrid"></div>
+      </section>
+
+      <div class="grid2">
+        <section class="card cal" aria-label="캘린더">
+          <div class="cal-bar">
+            <h2 id="calTitle" aria-live="polite"></h2>
+            <button type="button" class="btn sm" data-act="goToday">오늘</button>
+            <button type="button" class="icon-btn" data-act="prevMonth" aria-label="이전 달"><svg class="ic"><use href="#i-left"/></svg></button>
+            <button type="button" class="icon-btn" data-act="nextMonth" aria-label="다음 달"><svg class="ic"><use href="#i-right"/></svg></button>
+            <button type="button" class="btn sm primary" data-act="add"><svg class="ic"><use href="#i-plus"/></svg>일정 추가</button>
+          </div>
+          <div class="legend" id="legend"></div>
+          <div class="weekdays" aria-hidden="true"><div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div></div>
+          <div class="cal-grid" id="calGrid" role="grid" aria-labelledby="calTitle"></div>
+          <div class="day-panel" id="dayPanel"></div>
+        </section>
+
+        <aside class="col" aria-label="숙제와 다가오는 일정">
+          <div>
+            <div class="sec-head" style="margin-bottom:8px">
+              <h2><svg class="ic"><use href="#i-list"/></svg>일일 숙제</h2>
+              <div class="head-actions">
+                <button type="button" class="btn sm" id="btnEditTasks" data-act="toggleEdit" aria-pressed="false"><svg class="ic"><use href="#i-edit"/></svg><span>편집</span></button>
+                <button type="button" class="btn sm" data-act="resetAll"><svg class="ic"><use href="#i-reset"/></svg>초기화</button>
+              </div>
+            </div>
+            <p class="hint"><svg class="ic"><use href="#i-clock"/></svg><span id="resetHint"></span></p>
+          </div>
+          <div id="checklist" class="col"></div>
+
+          <div>
+            <div class="sec-head" style="margin:6px 0 8px">
+              <h2><svg class="ic"><use href="#i-sparkles"/></svg>다가오는 일정</h2>
+            </div>
+            <div class="card agenda" id="agenda"></div>
+          </div>
+        </aside>
+      </div>
+
+      <p class="foot-note">모든 데이터는 이 브라우저의 localStorage에만 저장돼요. 다른 기기로 옮길 땐 사이드바의 백업 기능을 사용하세요.</p>
+    </div>
+  </main>
+</div>
+
+<!-- ===== 일정 추가/수정 모달 ===== -->
+<dialog class="modal" id="eventDialog" aria-labelledby="dlgTitle">
+  <form id="eventForm" novalidate>
+    <div class="modal-head">
+      <h2 id="dlgTitle">일정 추가</h2>
+      <button type="button" class="icon-btn" data-close aria-label="닫기"><svg class="ic"><use href="#i-x"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <fieldset class="field"><legend>게임</legend><div class="game-pick" id="gamePick"></div></fieldset>
+      <div class="field">
+        <label for="fTitle">제목</label>
+        <input type="text" id="fTitle" maxlength="60" placeholder="예: 이벤트 스토리 파밍, 정기 점검, 스쿼드 매칭" autocomplete="off">
+      </div>
+      <fieldset class="field"><legend>유형</legend><div class="type-pick" id="typePick"></div></fieldset>
+      <div class="row3">
+        <div class="field"><label for="fDate">시작일</label><input type="date" id="fDate"></div>
+        <div class="field"><label for="fEnd">종료일 <small>(선택)</small></label><input type="date" id="fEnd"></div>
+        <div class="field"><label for="fTime">시간 <small>(선택)</small></label><input type="time" id="fTime"></div>
+      </div>
+      <div class="field"><label for="fMemo">메모</label><textarea id="fMemo" maxlength="400" placeholder="목표 재화, 파티 구성, 점검 내용 등을 자유롭게 적어 두세요"></textarea></div>
+      <label class="check-inline"><input type="checkbox" id="fDone"> 완료로 표시</label>
+      <p class="form-error" id="fError" role="alert"></p>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn danger" id="btnDelete"><svg class="ic"><use href="#i-trash"/></svg>삭제</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn ghost" data-close>취소</button>
+      <button type="submit" class="btn primary"><svg class="ic"><use href="#i-check"/></svg>저장</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<input type="file" id="importFile" accept="application/json,.json" hidden>
+<noscript>이 페이지는 JavaScript가 필요해요.</noscript>
+
+<script>
+(() => {
+'use strict';
+
+/* =====================================================================
+   상수 / 설정
+   ===================================================================== */
+const STORE_KEY = 'gamePlanner.v1';
+const WEEK = ['일', '월', '화', '수', '목', '금', '토'];
+const WEEK_LONG = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+
+const GAMES = {
+  ba: { id: 'ba', name: '블루아카이브', en: 'Blue Archive',   short: 'BA', file: 'BlueArchive.webp' },
+  ss: { id: 'ss', name: '스텔라소라',   en: 'Stella Sora',    short: 'SS', file: 'StellaSora.webp' },
+  er: { id: 'er', name: '이터널 리턴',  en: 'Eternal Return', short: 'ER', file: 'Eternal Return.webp' }
+};
+const GAME_IDS = ['ba', 'ss', 'er'];
+
+const TYPES = {
+  mainstory:  { label: '메인 스토리',   icon: 'book' },
+  eventstory: { label: '이벤트 스토리', icon: 'sparkles' },
+  update:     { label: '업데이트',      icon: 'download' },
+  event:      { label: '이벤트',        icon: 'gift' },
+  pickup:     { label: '캐릭터',  icon: 'star' },
+  etc:        { label: '기타',          icon: 'pin' }
+};
+/* 이전 버전에서 저장된 유형을 새 목록으로 변환 */
+const LEGACY_TYPES = { story: 'mainstory', homework: 'etc', farm: 'event', maint: 'update', match: 'etc' };
+
+/* 기본 일일 숙제 (앱 안에서 자유롭게 추가/삭제 가능) — [게임, 제목, 목표 횟수] */
+const DEFAULT_TASKS = [
+  ['ba', '카페 AP 수령 · 학생 터치', 1],
+  ['ba', '일일 임무 완료 · 보상 수령', 1],
+  ['ba', 'AP 소모 (캠페인 · 특별의뢰 · 학원교류회)', 1],
+  ['ba', '전술 대항전 도전', 1],
+  ['ba', '무료 상점 · 우편함 확인', 1],
+  ['ss', '출석 체크', 1],
+  ['ss', '일일 임무 완료 · 보상 수령', 1],
+  ['ss', '스태미나 소모', 1],
+  ['ss', '파견 보내기 · 수령', 1],
+  ['er', '일일 임무 완료', 1],
+  ['er', '게임 플레이 (판수)', 3],
+  ['er', '랭크 매칭 1판', 1],
+  ['er', '이벤트 미션 확인', 1]
+].map(([game, title, target], i) => ({ id: 'd' + (i + 1), game, title, target }));
+
+/* =====================================================================
+   유틸
+   ===================================================================== */
+const $  = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
+const pad = n => String(n).padStart(2, '0');
+const fmt = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parse = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const today = () => fmt(new Date());
+const diffDays = (a, b) => Math.round((parse(a) - parse(b)) / 86400000);
+const addDays = (s, n) => { const d = parse(s); d.setDate(d.getDate() + n); return fmt(d); };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const uid = () => { try { return crypto.randomUUID(); } catch (e) { return 'id' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); } };
+const ic = (name, cls = '') => `<svg class="ic ${cls}" aria-hidden="true"><use href="#i-${name}"/></svg>`;
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const TIME_RE = /^\d{2}:\d{2}$/;
+
+function fmtDate(s) {
+  const d = parse(s);
+  const withYear = d.getFullYear() !== new Date().getFullYear();
+  return `${withYear ? d.getFullYear() + '년 ' : ''}${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEK[d.getDay()]})`;
+}
+function fmtRange(ev) {
+  const base = (ev.endDate && ev.endDate !== ev.date) ? `${fmtDate(ev.date)} ~ ${fmtDate(ev.endDate)}` : fmtDate(ev.date);
+  return base + (ev.time ? ` · ${ev.time}` : '');
+}
+function fmtRemain(ms) {
+  const m = Math.floor(ms / 60000);
+  if (m < 1) return '1분 미만';
+  const h = Math.floor(m / 60);
+  return h > 0 ? `${h}시간 ${m % 60}분` : `${m}분`;
+}
+
+/* 게임 아이콘 (1:1 이미지 + 이미지가 없으면 이니셜 대체) */
+function gicon(id, size = 36) {
+  const g = GAMES[id];
+  return `<span class="gicon g-${id}" style="--s:${size}px"><b>${g.short}</b><img src="${encodeURI(g.file)}" alt="" loading="lazy" draggable="false"></span>`;
+}
+document.addEventListener('error', e => {
+  const t = e.target;
+  if (t && t.tagName === 'IMG' && t.closest && t.closest('.gicon')) t.remove();
+}, true);
+
+/* =====================================================================
+   상태 / 저장
+   ===================================================================== */
+function freshState() {
+  return {
+    version: 1,
+    events: [],
+    tasks: DEFAULT_TASKS.map(t => ({ ...t })),
+    progress: { dayKey: '', counts: {} },
+    settings: { theme: 'dark', filter: 'all', resetHour: 4, seeded: false }
+  };
+}
+function cleanEvent(e) {
+  if (!e || typeof e !== 'object') return null;
+  if (!GAMES[e.game]) return null;
+  const title = String(e.title || '').trim().slice(0, 60);
+  if (!title || !DATE_RE.test(e.date || '')) return null;
+  let endDate = DATE_RE.test(e.endDate || '') ? e.endDate : '';
+  if (endDate && endDate <= e.date) endDate = '';
+  return {
+    id: String(e.id || uid()), game: e.game, title, date: e.date, endDate,
+    time: TIME_RE.test(e.time || '') ? e.time : '',
+    type: TYPES[e.type] ? e.type : (LEGACY_TYPES[e.type] || 'etc'),
+    memo: String(e.memo || '').slice(0, 400),
+    done: !!e.done
+  };
+}
+function cleanTask(t) {
+  if (!t || typeof t !== 'object' || !GAMES[t.game]) return null;
+  const title = String(t.title || '').trim().slice(0, 40);
+  if (!title) return null;
+  const target = Math.max(1, Math.min(99, Math.floor(Number(t.target) || 1)));
+  return { id: String(t.id || uid()), game: t.game, title, target };
+}
+function normalize(raw) {
+  const s = freshState();
+  if (!raw || typeof raw !== 'object') return s;
+  if (Array.isArray(raw.events)) s.events = raw.events.map(cleanEvent).filter(Boolean);
+  if (Array.isArray(raw.tasks)) s.tasks = raw.tasks.map(cleanTask).filter(Boolean);
+  if (raw.progress && typeof raw.progress === 'object') {
+    s.progress.dayKey = String(raw.progress.dayKey || '');
+    const c = raw.progress.counts;
+    if (c && typeof c === 'object') {
+      for (const k in c) { const n = Math.floor(Number(c[k])); if (Number.isFinite(n) && n > 0) s.progress.counts[k] = n; }
+    }
+  }
+  const st = raw.settings || {};
+  if (st.theme === 'light' || st.theme === 'dark') s.settings.theme = st.theme;
+  if (st.filter === 'all' || GAMES[st.filter]) s.settings.filter = st.filter;
+  const rh = Math.floor(Number(st.resetHour));
+  if (Number.isFinite(rh) && rh >= 0 && rh <= 23) s.settings.resetHour = rh;
+  s.settings.seeded = !!st.seeded;
+  return s;
+}
+function load() {
+  let raw = null;
+  try { raw = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); } catch (e) { raw = null; }
+  return normalize(raw);
+}
+let warnedSave = false;
+function save() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+  catch (e) {
+    if (!warnedSave) { warnedSave = true; toast('브라우저 저장소에 쓸 수 없어요. 시크릿 모드이거나 저장 공간이 부족할 수 있어요.'); }
+  }
+}
+
+let state = load();
+let view = { y: new Date().getFullYear(), m: new Date().getMonth() };
+let selected = today();
+let lastToday = today();
+let editMode = false;
+let editingId = null;
+let lastGame = null;
+
+/* 일일 초기화 */
+const gameDayKey = () => fmt(new Date(Date.now() - state.settings.resetHour * 3600000));
+function ensureDayFresh() {
+  const k = gameDayKey();
+  if (state.progress.dayKey !== k) { state.progress = { dayKey: k, counts: {} }; return true; }
+  return false;
+}
+function nextResetMs() {
+  const now = new Date();
+  const r = new Date(now.getFullYear(), now.getMonth(), now.getDate(), state.settings.resetHour, 0, 0, 0);
+  if (r <= now) r.setDate(r.getDate() + 1);
+  return r - now;
+}
+
+/* 샘플 데이터 (처음 한 번만) */
+function seed() {
+  const t = today();
+  const mk = (game, title, type, date, endDate, time, memo) => ({ id: uid(), game, title, type, date, endDate: endDate || '', time: time || '', memo: memo || '', done: false });
+  state.events.push(
+    mk('er', '스쿼드 매칭 (예시)', 'etc', t, '', '22:00', '샘플 일정이에요. 자유롭게 수정하거나 삭제하세요.'),
+    mk('ss', '메인 스토리 신규 챕터 (예시)', 'mainstory', addDays(t, 1), '', '', '샘플 일정'),
+    mk('ba', '이벤트 스토리 읽기 (예시)', 'eventstory', addDays(t, 4), '', '', '샘플 일정'),
+    mk('ba', '이벤트 파밍 (예시)', 'event', addDays(t, 2), addDays(t, 9), '', '이벤트 재화 목표를 메모해 두세요.'),
+    mk('er', '시즌 이벤트 (예시)', 'event', addDays(t, 3), addDays(t, 10)),
+    mk('ba', '픽업 캐릭터 이름 (예시)', 'pickup', addDays(t, 3), addDays(t, 17), '', '픽업 기간과 목표 재화를 메모해 두세요.'),
+    mk('ss', '픽업 캐릭터 이름 (예시)', 'pickup', addDays(t, 6), addDays(t, 20)),
+    mk('ba', '정기 업데이트 · 점검 (예시)', 'update', addDays(t, 5), '', '11:00', '점검 시각은 공지를 확인해서 수정하세요.'),
+    mk('ss', '버전 업데이트 (예시)', 'update', addDays(t, 7), '', '10:00')
+  );
+  state.settings.seeded = true;
+}
+
+/* =====================================================================
+   데이터 헬퍼
+   ===================================================================== */
+const endOf = e => e.endDate || e.date;
+const visibleGame = g => state.settings.filter === 'all' || state.settings.filter === g;
+const visibleIds = () => GAME_IDS.filter(visibleGame);
+const visibleEvents = () => state.events.filter(e => visibleGame(e.game));
+const cmpTime = (a, b) => (a.time || '').localeCompare(b.time || '') || a.title.localeCompare(b.title, 'ko');
+const eventsOn = ds => visibleEvents().filter(e => e.date <= ds && ds <= endOf(e)).sort(cmpTime);
+const count = id => state.progress.counts[id] || 0;
+const taskById = id => state.tasks.find(t => t.id === id);
+
+function upcomingList(pred = () => true) {
+  const t = today();
+  return state.events
+    .filter(e => visibleGame(e.game) && pred(e) && !e.done && endOf(e) >= t)
+    .map(e => ({ e, eff: e.date > t ? e.date : t }))
+    .sort((a, b) => a.eff.localeCompare(b.eff) || (a.e.time || '99:99').localeCompare(b.e.time || '99:99') || endOf(a.e).localeCompare(endOf(b.e)))
+    .map(x => x.e);
+}
+function dday(ev) {
+  const t = today(), s = ev.date, e = endOf(ev);
+  if (e < t) return { label: '종료', sub: '', cls: 'past' };
+  if (s <= t) {
+    if (s === e) return { label: 'D-Day', sub: ev.time ? `오늘 ${ev.time}` : '오늘', cls: 'today' };
+    const left = diffDays(e, t);
+    return { label: '진행 중', sub: left === 0 ? '오늘 종료' : `종료까지 ${left}일`, cls: 'live' };
+  }
+  const n = diffDays(s, t);
+  return { label: `D-${n}`, sub: n === 1 ? '내일' : '', cls: n <= 3 ? 'soon' : 'far' };
+}
+function gameProgress(id) {
+  const ts = state.tasks.filter(t => t.game === id);
+  const done = ts.filter(t => count(t.id) >= t.target).length;
+  return { done, total: ts.length, pct: ts.length ? Math.round(done / ts.length * 100) : 0 };
+}
+function totalProgress() {
+  let d = 0, t = 0;
+  visibleIds().forEach(id => { const p = gameProgress(id); d += p.done; t += p.total; });
+  return { done: d, total: t, pct: t ? Math.round(d / t * 100) : 0 };
+}
+
+/* =====================================================================
+   렌더링
+   ===================================================================== */
+function renderTopbar() {
+  const n = new Date();
+  $('#topDate').textContent = `${n.getMonth() + 1}월 ${n.getDate()}일 ${WEEK_LONG[n.getDay()]}`;
+  $('#topTime').textContent = `${pad(n.getHours())}:${pad(n.getMinutes())}`;
+  const r = fmtRemain(nextResetMs());
+  $('#resetPillText').textContent = `숙제 초기화까지 ${r}`;
+  $('#resetHint').textContent = `매일 ${pad(state.settings.resetHour)}:00 자동 초기화 · ${r} 남음`;
+}
+
+function renderNav() {
+  const t = today();
+  const cnt = id => state.events.filter(e => (id === 'all' || e.game === id) && !e.done && endOf(e) >= t).length;
+  const cur = state.settings.filter;
+  $('#gameNav').innerHTML = ['all', ...GAME_IDS].map(id => {
+    const isAll = id === 'all', g = GAMES[id];
+    return `<button type="button" class="nav-btn ${isAll ? '' : 'g-' + id}" data-act="filter" data-game="${id}" aria-current="${cur === id}">
+      ${isAll ? `<span class="gicon all" style="--s:38px">${ic('grid')}</span>` : gicon(id, 38)}
+      <span class="nav-txt"><b>${isAll ? '전체 보기' : g.name}</b><small>${isAll ? '통합 대시보드' : g.en}</small></span>
+      <span class="badge" title="예정된 일정 수">${cnt(id)}</span>
+    </button>`;
+  }).join('');
+}
+
+function greeting() {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 11) return '좋은 아침이에요';
+  if (h >= 11 && h < 17) return '좋은 오후예요';
+  if (h >= 17 && h < 22) return '좋은 저녁이에요';
+  return '늦은 시간이네요';
+}
+function renderHero() {
+  const f = state.settings.filter;
+  const t = today();
+  const title = f === 'all' ? '통합 게임 플래너' : GAMES[f].name;
+  const en = f === 'all' ? 'Blue Archive · Stella Sora · Eternal Return' : GAMES[f].en;
+  const icons = f === 'all' ? `<div class="stack">${GAME_IDS.map(id => gicon(id, 52)).join('')}</div>` : gicon(f, 72);
+  const tp = totalProgress();
+  const remain = tp.total - tp.done;
+  const msg = tp.total === 0 ? '숙제를 추가해 보세요.' : remain === 0 ? '오늘 숙제를 모두 끝냈어요!' : `남은 숙제 ${remain}개`;
+
+  const in7 = visibleEvents().filter(e => !e.done && endOf(e) >= t && e.date <= addDays(t, 7)).length;
+  const n = new Date();
+  const ms = `${n.getFullYear()}-${pad(n.getMonth() + 1)}-01`;
+  const me = fmt(new Date(n.getFullYear(), n.getMonth() + 1, 0));
+  const monthList = visibleEvents().filter(e => e.date <= me && endOf(e) >= ms);
+  const mDone = monthList.filter(e => e.done).length;
+  const mPct = monthList.length ? Math.round(mDone / monthList.length * 100) : 0;
+
+  $('#hero').innerHTML = `
+    <div class="hero-top">
+      ${icons}
+      <div><h1>${title}</h1><p>${greeting()} · ${en} · ${msg}</p></div>
+      <button type="button" class="btn primary" data-act="add" ${f !== 'all' ? `data-game="${f}"` : ''}>${ic('plus')}일정 추가</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><span>오늘 숙제</span><b id="statTasksVal">${tp.done}<small>/ ${tp.total}</small></b><div class="bar"><i id="statTasksBar" style="width:${tp.pct}%"></i></div></div>
+      <div class="stat"><span>7일 이내 일정</span><b>${in7}<small>건</small></b><div class="bar"><i style="width:${Math.min(100, in7 * 20)}%"></i></div></div>
+      <div class="stat"><span>이번 달 일정 완료</span><b>${mDone}<small>/ ${monthList.length}</small></b><div class="bar"><i style="width:${mPct}%"></i></div></div>
+    </div>`;
+}
+
+function ddayCard({ game, ev }) {
+  const g = GAMES[game];
+  if (!ev) {
+    return `<div class="dcard empty g-${game}">${gicon(game, 42)}
+      <div class="dc-body"><span class="dc-game">${g.name}</span><span class="dc-title muted">예정된 일정이 없어요</span></div>
+      <button type="button" class="mini-btn" style="margin-left:auto" data-act="add" data-game="${game}">${ic('plus')}추가</button></div>`;
+  }
+  const d = dday(ev), ty = TYPES[ev.type];
+  return `<button type="button" class="dcard g-${game} ${d.cls}" data-act="edit" data-id="${ev.id}">
+    ${gicon(game, 42)}
+    <span class="dc-body">
+      <span class="dc-game">${g.name} · ${ty.label}</span>
+      <span class="dc-title">${esc(ev.title)}</span>
+      <span class="dc-meta">${fmtRange(ev)}</span>
+    </span>
+    <span class="dc-d"><b>${d.label}</b><small>${d.sub}</small></span>
+  </button>`;
+}
+function renderDday() {
+  const f = state.settings.filter;
+  let cards;
+  if (f === 'all') {
+    cards = GAME_IDS.map(id => ({ game: id, ev: upcomingList(e => e.game === id)[0] }));
+    $('#ddaySub').textContent = '게임별로 가장 가까운 일정';
+  } else {
+    const list = upcomingList(e => e.game === f).slice(0, 3);
+    cards = list.length ? list.map(ev => ({ game: f, ev })) : [{ game: f, ev: null }];
+    $('#ddaySub').textContent = `${GAMES[f].name}의 다가오는 일정`;
+  }
+  $('#dgrid').innerHTML = cards.map(ddayCard).join('');
+}
+
+/* 기간 일정은 주(週) 단위로 이어진 바 하나로 그리고, 이름은 바 시작 칸에서 한 번만 보여준다 */
+function chipHTML(e, seg) {
+  const { len, contL, contR } = seg;
+  const spanning = len > 1 || contL || contR;
+  let style = '';
+  if (spanning) {
+    const extra = (contL ? 6 : 0) + (contR ? 6 : 0);
+    style = ` style="width:calc(${len} * (100% + 13px) - 13px + ${extra}px);${contL ? 'margin-left:-6px;' : ''}"`;
+  }
+  return `<button type="button" class="chip g-${e.game}${e.done ? ' done' : ''}${spanning ? ' span' : ''}${contL ? ' cont-l' : ''}${contR ? ' cont-r' : ''}" data-act="edit" data-id="${e.id}" title="${esc(e.title)}"${style}>
+    ${!contL ? ic(TYPES[e.type].icon) : ''}${e.time && !contL ? `<em>${e.time}</em>` : ''}<span>${esc(e.title)}</span></button>`;
+}
+function renderCalendar(dir) {
+  const { y, m } = view;
+  const t = today();
+  const MAXLANE = 3;
+  $('#calTitle').textContent = `${y}년 ${m + 1}월`;
+  const offset = new Date(y, m, 1).getDay();
+  const evs = visibleEvents();
+  let html = '';
+  for (let r = 0; r < 6; r++) {
+    const days = [];
+    for (let c = 0; c < 7; c++) days.push(fmt(new Date(y, m, 1 - offset + r * 7 + c)));
+    const rowEvs = evs.filter(e => e.date <= days[6] && endOf(e) >= days[0]).sort((a, b) => {
+      const am = endOf(a) !== a.date ? 0 : 1, bm = endOf(b) !== b.date ? 0 : 1;
+      return am - bm || a.date.localeCompare(b.date) || endOf(b).localeCompare(endOf(a)) || cmpTime(a, b);
+    });
+    const occ = [], seg = {};
+    rowEvs.forEach(e => {
+      const s = Math.max(0, diffDays(e.date, days[0]));
+      const en = Math.min(6, diffDays(endOf(e), days[0]));
+      let l = 0;
+      for (;; l++) {
+        if (!occ[l]) occ[l] = new Array(7).fill(null);
+        let free = true;
+        for (let k = s; k <= en; k++) if (occ[l][k]) { free = false; break; }
+        if (free) break;
+      }
+      for (let k = s; k <= en; k++) occ[l][k] = e;
+      seg[e.id] = { s, en };
+    });
+    for (let c = 0; c < 7; c++) {
+      const ds = days[c], d = parse(ds);
+      const list = evs.filter(e => e.date <= ds && ds <= endOf(e)).sort(cmpTime);
+      let last = -1;
+      for (let l = 0; l < Math.min(MAXLANE, occ.length); l++) if (occ[l][c]) last = l;
+      let slots = '', hidden = 0;
+      for (let l = 0; l <= last; l++) {
+        const e = occ[l][c];
+        const sg = e && seg[e.id];
+        if (e && c === sg.s) {
+          slots += chipHTML(e, { len: sg.en - sg.s + 1, contL: e.date < days[sg.s], contR: endOf(e) > days[sg.en] });
+        } else {
+          slots += '<span class="chip-gap"></span>';
+        }
+      }
+      for (let l = MAXLANE; l < occ.length; l++) if (occ[l][c]) hidden++;
+      const dow = d.getDay();
+      const cls = ['cell', d.getMonth() !== m ? 'out' : '', ds === t ? 'today' : '', ds === selected ? 'selected' : '', dow === 0 ? 'sun' : '', dow === 6 ? 'sat' : ''].filter(Boolean).join(' ');
+      html += `<div class="${cls}" role="gridcell" data-act="selectDay" data-date="${ds}">
+        <div class="cell-top">
+          <button type="button" class="dnum" data-act="selectDay" data-date="${ds}" aria-label="${d.getMonth() + 1}월 ${d.getDate()}일, 일정 ${list.length}건">${d.getDate()}</button>
+          <button type="button" class="cell-add" data-act="add" data-date="${ds}" aria-label="${d.getMonth() + 1}월 ${d.getDate()}일에 일정 추가">${ic('plus')}</button>
+        </div>
+        <div class="chips">${slots}${hidden ? `<span class="more">+${hidden}개 더</span>` : ''}</div>
+        <div class="dots">${list.slice(0, 4).map(e => `<i class="g-${e.game}"></i>`).join('')}</div>
+      </div>`;
+    }
+  }
+  const grid = $('#calGrid');
+  grid.innerHTML = html;
+  if (dir !== undefined) {
+    grid.style.setProperty('--dir', dir || 1);
+    grid.classList.remove('anim'); void grid.offsetWidth; grid.classList.add('anim');
+  }
+  $('#legend').innerHTML = visibleIds().map(id => `<span class="g-${id}"><i></i>${GAMES[id].name}</span>`).join('');
+}
+
+function renderDayPanel(flash) {
+  const d = parse(selected);
+  const list = eventsOn(selected);
+  const isToday = selected === today();
+  const panel = $('#dayPanel');
+  panel.innerHTML = `
+    <div class="dp-head">
+      <div>
+        <h3>${d.getMonth() + 1}월 ${d.getDate()}일 <span class="wd">(${WEEK[d.getDay()]})</span>${isToday ? '<span class="pill accent">오늘</span>' : ''}</h3>
+        <p>${list.length ? `일정 ${list.length}건` : '등록된 일정이 없어요'}</p>
+      </div>
+      <button type="button" class="btn sm primary" data-act="add" data-date="${selected}">${ic('plus')}추가</button>
+    </div>
+    ${list.length ? `<ul class="ev-list">${list.map(e => `
+      <li class="ev g-${e.game} ${e.done ? 'done' : ''}">
+        <button type="button" class="chk" role="checkbox" aria-checked="${e.done}" aria-label="완료 표시" data-act="toggleDone" data-id="${e.id}">${ic('check')}</button>
+        <div class="ev-main" data-act="edit" data-id="${e.id}">
+          <div class="ev-title">${esc(e.title)}</div>
+          <div class="ev-meta">
+            <span class="tag g">${gicon(e.game, 18)}${GAMES[e.game].name}</span>
+            <span class="tag">${ic(TYPES[e.type].icon)}${TYPES[e.type].label}</span>
+            ${e.time ? `<span class="tag">${ic('clock')}${e.time}</span>` : ''}
+            ${e.endDate ? `<span class="tag">${ic('calendar')}${fmtDate(e.date)} ~ ${fmtDate(e.endDate)}</span>` : ''}
+          </div>
+          ${e.memo ? `<p class="ev-memo">${esc(e.memo)}</p>` : ''}
+        </div>
+        <div class="ev-actions">
+          <button type="button" class="icon-btn sm" data-act="edit" data-id="${e.id}" aria-label="수정">${ic('pencil')}</button>
+          <button type="button" class="icon-btn sm del" data-act="delEvent" data-id="${e.id}" aria-label="삭제">${ic('trash')}</button>
+        </div>
+      </li>`).join('')}</ul>`
+    : `<div class="empty-state">${ic('inbox')}<span>이 날은 비어 있어요.<br>숙제, 이벤트 파밍, 점검, 매칭 계획을 등록해 보세요.</span></div>`}`;
+  if (flash) { panel.classList.remove('flash'); void panel.offsetWidth; panel.classList.add('flash'); }
+}
+
+function taskRow(t) {
+  const c = count(t.id), done = c >= t.target;
+  const left = t.target > 1
+    ? `<div class="counter"><button type="button" class="cbtn" data-act="dec" data-id="${t.id}" aria-label="횟수 감소" ${c <= 0 ? 'disabled' : ''}>−</button><span class="cval" data-cval>${c}/${t.target}</span><button type="button" class="cbtn" data-act="inc" data-id="${t.id}" aria-label="횟수 증가" ${c >= t.target ? 'disabled' : ''}>+</button></div>`
+    : `<button type="button" class="chk" role="checkbox" aria-checked="${done}" aria-label="${esc(t.title)} 완료" data-act="toggleTask" data-id="${t.id}">${ic('check')}</button>`;
+  return `<li class="task ${done ? 'done' : ''}" data-task="${t.id}">
+    ${left}
+    <span class="t-title" ${t.target === 1 ? `data-act="toggleTask" data-id="${t.id}"` : ''}>${esc(t.title)}</span>
+    ${editMode ? `<button type="button" class="icon-btn sm del" data-act="delTask" data-id="${t.id}" aria-label="숙제 삭제">${ic('trash')}</button>` : ''}
+  </li>`;
+}
+function renderChecklist() {
+  const ids = visibleIds();
+  $('#checklist').innerHTML = ids.map(id => {
+    const g = GAMES[id];
+    const ts = state.tasks.filter(t => t.game === id);
+    return `<section class="card cl g-${id}" data-cl="${id}">
+      <div class="cl-head">
+        ${gicon(id, 40)}
+        <div><b>${g.name}</b><span class="cl-count"></span></div>
+        <button type="button" class="icon-btn" data-act="resetGame" data-game="${id}" aria-label="${g.name} 숙제 초기화" title="이 게임 초기화">${ic('reset')}</button>
+      </div>
+      <div class="bar"><i style="width:0"></i></div>
+      ${ts.length ? `<ul class="tasks">${ts.map(taskRow).join('')}</ul>` : `<p class="no-task">등록된 숙제가 없어요. 편집 모드에서 추가해 보세요.</p>`}
+      ${editMode ? `<form class="add-task" data-game="${id}"><input name="tname" type="text" maxlength="40" placeholder="새 숙제 이름" required autocomplete="off"><input name="tgoal" type="number" min="1" max="99" value="1" title="하루 목표 횟수 (1이면 체크박스, 2 이상이면 카운터)" aria-label="목표 횟수"><button type="submit" class="mini-btn">${ic('plus')}추가</button></form>` : ''}
+    </section>`;
+  }).join('');
+  requestAnimationFrame(() => requestAnimationFrame(syncChecklistUI));
+}
+/* 구조 변경 없이 상태만 갱신 (애니메이션 유지) */
+function syncChecklistUI() {
+  $$('.task[data-task]').forEach(li => {
+    const t = taskById(li.dataset.task);
+    if (!t) return;
+    const c = count(t.id), done = c >= t.target;
+    li.classList.toggle('done', done);
+    const chk = $('.chk', li); if (chk) chk.setAttribute('aria-checked', String(done));
+    const cv = $('[data-cval]', li); if (cv) cv.textContent = `${c}/${t.target}`;
+    const dec = $('[data-act="dec"]', li), inc = $('[data-act="inc"]', li);
+    if (dec) dec.disabled = c <= 0;
+    if (inc) inc.disabled = c >= t.target;
+  });
+  GAME_IDS.forEach(id => {
+    const card = $(`[data-cl="${id}"]`);
+    if (!card) return;
+    const p = gameProgress(id);
+    $('.cl-count', card).textContent = p.total ? `${p.done}/${p.total} 완료${p.done === p.total ? ' · 모두 끝!' : ''}` : '숙제 없음';
+    $('.bar i', card).style.width = p.pct + '%';
+    card.classList.toggle('all-done', p.total > 0 && p.done === p.total);
+  });
+  const tp = totalProgress();
+  const v = $('#statTasksVal'), b = $('#statTasksBar');
+  if (v) v.innerHTML = `${tp.done}<small>/ ${tp.total}</small>`;
+  if (b) b.style.width = tp.pct + '%';
+}
+
+function renderAgenda() {
+  const list = upcomingList().slice(0, 8);
+  const t = today();
+  $('#agenda').innerHTML = list.length ? list.map(e => {
+    const d = dday(e), ty = TYPES[e.type];
+    const eff = parse(e.date > t ? e.date : t);
+    return `<button type="button" class="ag g-${e.game}" data-act="edit" data-id="${e.id}">
+      <span class="ag-date"><small>${eff.getMonth() + 1}월</small><b>${eff.getDate()}</b></span>
+      <span class="ag-main"><b>${esc(e.title)}</b><small>${GAMES[e.game].name} · ${ty.label}${e.time ? ' · ' + e.time : ''}</small></span>
+      <span class="ag-d ${d.cls}">${d.label}</span>
+    </button>`;
+  }).join('') : `<div class="empty-state">${ic('inbox')}<span>다가오는 일정이 없어요.</span></div>`;
+}
+
+function renderAll() {
+  renderTopbar();
+  renderNav();
+  renderHero();
+  renderDday();
+  renderCalendar();
+  renderDayPanel();
+  renderChecklist();
+  renderAgenda();
+}
+function replayAnim() {
+  const c = $('#container');
+  c.classList.remove('swap'); void c.offsetWidth; c.classList.add('swap');
+}
+
+/* =====================================================================
+   동작
+   ===================================================================== */
+function setFilter(f) {
+  if (state.settings.filter === f) { closeSidebar(); return; }
+  state.settings.filter = f;
+  document.body.dataset.filter = f;
+  save(); renderAll(); replayAnim(); closeSidebar();
+}
+function selectDay(ds) {
+  selected = ds;
+  $$('.cell.selected').forEach(c => c.classList.remove('selected'));
+  const c = $(`.cell[data-date="${ds}"]`);
+  if (c) c.classList.add('selected');
+  renderDayPanel(true);
+}
+function shiftMonth(delta) {
+  let { y, m } = view;
+  m += delta;
+  while (m < 0) { m += 12; y--; }
+  while (m > 11) { m -= 12; y++; }
+  view = { y, m };
+  renderCalendar(delta);
+}
+function goToday() {
+  const n = new Date();
+  const dir = (n.getFullYear() * 12 + n.getMonth()) >= (view.y * 12 + view.m) ? 1 : -1;
+  view = { y: n.getFullYear(), m: n.getMonth() };
+  selected = today();
+  renderCalendar(dir);
+  renderDayPanel(true);
+}
+
+/* 숙제 */
+function setCount(id, n) {
+  const t = taskById(id); if (!t) return;
+  n = Math.max(0, Math.min(t.target, n));
+  if (n === 0) delete state.progress.counts[id]; else state.progress.counts[id] = n;
+  save(); syncChecklistUI();
+}
+function resetTasks(ids) {
+  const prev = { ...state.progress.counts };
+  state.tasks.filter(t => ids.includes(t.game)).forEach(t => { delete state.progress.counts[t.id]; });
+  save(); syncChecklistUI();
+  toast(ids.length === 1 ? `${GAMES[ids[0]].name} 숙제를 초기화했어요` : '숙제를 모두 초기화했어요', '되돌리기', () => {
+    state.progress.counts = prev; save(); syncChecklistUI();
+  });
+}
+function deleteTask(id) {
+  const i = state.tasks.findIndex(t => t.id === id); if (i < 0) return;
+  const [t] = state.tasks.splice(i, 1);
+  const c = state.progress.counts[id];
+  delete state.progress.counts[id];
+  save(); renderChecklist(); renderHero();
+  toast(`숙제 "${t.title.slice(0, 18)}"을(를) 삭제했어요`, '되돌리기', () => {
+    state.tasks.splice(Math.min(i, state.tasks.length), 0, t);
+    if (c) state.progress.counts[id] = c;
+    save(); renderChecklist(); renderHero();
+  });
+}
+
+/* 일정 CRUD */
+const dlg = $('#eventDialog');
+const form = $('#eventForm');
+const setRadio = (name, val) => { const r = form.querySelector(`input[name="${name}"][value="${val}"]`); if (r) r.checked = true; };
+const getRadio = name => { const r = form.querySelector(`input[name="${name}"]:checked`); return r ? r.value : ''; };
+
+function buildDialogControls() {
+  $('#gamePick').innerHTML = GAME_IDS.map(id => `<label class="gp g-${id}"><input type="radio" name="fGame" value="${id}"><span class="gp-body">${gicon(id, 34)}<span>${GAMES[id].name}</span></span></label>`).join('');
+  $('#typePick').innerHTML = Object.entries(TYPES).map(([k, v]) => `<label class="tp"><input type="radio" name="fType" value="${k}"><span>${ic(v.icon)}${v.label}</span></label>`).join('');
+  $('#resetHour').innerHTML = Array.from({ length: 24 }, (_, h) => `<option value="${h}">${pad(h)}:00</option>`).join('');
+  $('#resetHour').value = String(state.settings.resetHour);
+}
+function openEventDialog(opts = {}) {
+  const ev = opts.id ? state.events.find(e => e.id === opts.id) : null;
+  editingId = ev ? ev.id : null;
+  $('#dlgTitle').textContent = ev ? '일정 수정' : '일정 추가';
+  const game = ev ? ev.game : (opts.game || (state.settings.filter !== 'all' ? state.settings.filter : (lastGame || 'ba')));
+  setRadio('fGame', game);
+  setRadio('fType', ev ? ev.type : (opts.type || 'mainstory'));
+  updatePlaceholder();
+  $('#fTitle').value = ev ? ev.title : '';
+  $('#fDate').value = ev ? ev.date : (opts.date || selected);
+  $('#fEnd').value = ev ? ev.endDate : '';
+  $('#fEnd').min = $('#fDate').value;
+  $('#fTime').value = ev ? ev.time : '';
+  $('#fMemo').value = ev ? ev.memo : '';
+  $('#fDone').checked = ev ? ev.done : false;
+  $('#btnDelete').hidden = !ev;
+  $('#fError').textContent = '';
+  if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', '');
+  setTimeout(() => $('#fTitle').focus(), 30);
+}
+function updatePlaceholder() {
+  $('#fTitle').placeholder = getRadio('fType') === 'pickup'
+    ? '예: 픽업 캐릭터 이름'
+    : '예: 신규 챕터, 이벤트 스토리, 정기 점검';
+}
+form.addEventListener('change', e => { if (e.target.name === 'fType') updatePlaceholder(); });
+function closeDialog() { if (dlg.close) dlg.close(); else dlg.removeAttribute('open'); }
+
+function saveEventFromForm() {
+  const err = m => { $('#fError').textContent = m; };
+  const game = getRadio('fGame'), type = getRadio('fType') || 'etc';
+  const title = $('#fTitle').value.trim();
+  const date = $('#fDate').value;
+  let endDate = $('#fEnd').value;
+  const time = $('#fTime').value;
+  if (!GAMES[game]) return err('게임을 선택해주세요.');
+  if (!title) { $('#fTitle').focus(); return err('제목을 입력해주세요.'); }
+  if (!DATE_RE.test(date)) return err('시작일을 선택해주세요.');
+  if (endDate && endDate < date) return err('종료일은 시작일보다 빠를 수 없어요.');
+  if (endDate === date) endDate = '';
+  const data = { game, type, title, date, endDate, time, memo: $('#fMemo').value.trim(), done: $('#fDone').checked };
+  const wasEdit = !!editingId;
+  if (editingId) {
+    const ev = state.events.find(e => e.id === editingId);
+    if (ev) Object.assign(ev, data);
+  } else {
+    state.events.push({ id: uid(), ...data });
+  }
+  lastGame = game;
+  const d = parse(date);
+  view = { y: d.getFullYear(), m: d.getMonth() };
+  selected = date;
+  save(); renderAll(); closeDialog();
+  const hidden = !visibleGame(game);
+  toast(hidden ? `저장했어요 (현재 필터에서는 ${GAMES[game].name} 일정이 보이지 않아요)` : (wasEdit ? '일정을 수정했어요' : '일정을 추가했어요'));
+}
+function toggleEventDone(id) {
+  const ev = state.events.find(e => e.id === id); if (!ev) return;
+  ev.done = !ev.done;
+  save(); renderAll();
+}
+function deleteEvent(id) {
+  const i = state.events.findIndex(e => e.id === id); if (i < 0) return;
+  const [ev] = state.events.splice(i, 1);
+  save(); renderAll();
+  if (dlg.open) closeDialog();
+  toast(`"${ev.title.slice(0, 20)}" 일정을 삭제했어요`, '되돌리기', () => {
+    state.events.splice(Math.min(i, state.events.length), 0, ev);
+    save(); renderAll();
+  });
+}
+
+/* 테마 */
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', state.settings.theme);
+  $('#themeBtn').setAttribute('aria-label', state.settings.theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환');
+}
+function toggleTheme() {
+  const root = document.documentElement;
+  root.classList.add('theme-anim');
+  state.settings.theme = state.settings.theme === 'dark' ? 'light' : 'dark';
+  applyTheme(); save();
+  setTimeout(() => root.classList.remove('theme-anim'), 450);
+}
+
+/* 사이드바 (모바일) */
+function openSidebar() { $('#sidebar').classList.add('open'); $('#scrim').classList.add('show'); }
+function closeSidebar() { $('#sidebar').classList.remove('open'); $('#scrim').classList.remove('show'); }
+
+/* 백업 */
+function exportData() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `game-planner-${today().replace(/-/g, '')}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  toast('백업 파일을 내려받았어요');
+}
+function importData(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    let raw;
+    try { raw = JSON.parse(String(reader.result)); } catch (e) { return toast('올바른 JSON 파일이 아니에요'); }
+    if (!raw || typeof raw !== 'object' || (!Array.isArray(raw.events) && !Array.isArray(raw.tasks))) return toast('플래너 백업 파일이 아니에요');
+    if (!confirm('현재 데이터를 백업 파일의 내용으로 덮어쓸까요?')) return;
+    const next = normalize(raw);
+    next.settings.theme = state.settings.theme;
+    next.settings.filter = state.settings.filter;
+    next.settings.seeded = true;
+    state = next;
+    ensureDayFresh(); save();
+    $('#resetHour').value = String(state.settings.resetHour);
+    renderAll();
+    toast('백업을 불러왔어요');
+  };
+  reader.readAsText(file);
+}
+function wipeData() {
+  if (!confirm('모든 일정, 숙제, 설정을 삭제할까요? 되돌릴 수 없어요.')) return;
+  const theme = state.settings.theme;
+  state = freshState();
+  state.settings.theme = theme;
+  state.settings.seeded = true;
+  ensureDayFresh(); save();
+  document.body.dataset.filter = 'all';
+  $('#resetHour').value = String(state.settings.resetHour);
+  renderAll(); replayAnim();
+  toast('모든 데이터를 초기화했어요');
+}
+
+/* 토스트 */
+function toast(msg, label, fn) {
+  const box = $('#toasts');
+  while (box.children.length >= 3) box.firstElementChild.remove();
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.setAttribute('role', 'status');
+  const span = document.createElement('span');
+  span.textContent = msg;
+  el.appendChild(span);
+  let timer;
+  const remove = () => { clearTimeout(timer); el.classList.add('out'); setTimeout(() => el.remove(), 260); };
+  if (label && fn) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = label;
+    b.addEventListener('click', () => { fn(); remove(); });
+    el.appendChild(b);
+  }
+  box.appendChild(el);
+  timer = setTimeout(remove, label ? 6000 : 3500);
+}
+
+/* =====================================================================
+   이벤트 바인딩
+   ===================================================================== */
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]');
+  if (!el) return;
+  const act = el.dataset.act, id = el.dataset.id;
+  switch (act) {
+    case 'filter':      setFilter(el.dataset.game); break;
+    case 'add':         openEventDialog({ date: el.dataset.date, game: el.dataset.game }); break;
+    case 'edit':        openEventDialog({ id }); break;
+    case 'selectDay':   selectDay(el.dataset.date); break;
+    case 'prevMonth':   shiftMonth(-1); break;
+    case 'nextMonth':   shiftMonth(1); break;
+    case 'goToday':     goToday(); break;
+    case 'toggleDone':  toggleEventDone(id); break;
+    case 'delEvent':    deleteEvent(id); break;
+    case 'toggleTask': { const t = taskById(id); if (t) setCount(id, count(id) >= t.target ? 0 : t.target); break; }
+    case 'inc':         setCount(id, count(id) + 1); break;
+    case 'dec':         setCount(id, count(id) - 1); break;
+    case 'delTask':     deleteTask(id); break;
+    case 'resetGame':   resetTasks([el.dataset.game]); break;
+    case 'resetAll':    resetTasks(visibleIds()); break;
+    case 'toggleEdit':
+      editMode = !editMode;
+      el.setAttribute('aria-pressed', String(editMode));
+      $('span', el).textContent = editMode ? '완료' : '편집';
+      renderChecklist();
+      break;
+    case 'exportData':  exportData(); break;
+    case 'importData':  $('#importFile').click(); break;
+    case 'wipeData':    wipeData(); break;
+  }
+});
+
+document.addEventListener('submit', e => {
+  const f = e.target.closest('form.add-task');
+  if (!f) return;
+  e.preventDefault();
+  const game = f.dataset.game;
+  const title = f.elements.tname.value.trim();
+  const target = Math.max(1, Math.min(99, Math.floor(Number(f.elements.tgoal.value) || 1)));
+  if (!title) return;
+  state.tasks.push({ id: uid(), game, title: title.slice(0, 40), target });
+  save(); renderChecklist(); renderHero();
+  const input = $(`[data-cl="${game}"] .add-task input[name="tname"]`);
+  if (input) input.focus();
+});
+
+$('#calGrid').addEventListener('dblclick', e => {
+  if (e.target.closest('.chip') || e.target.closest('.cell-add')) return;
+  const cell = e.target.closest('.cell');
+  if (cell) openEventDialog({ date: cell.dataset.date });
+});
+
+form.addEventListener('submit', e => { e.preventDefault(); saveEventFromForm(); });
+$('#fDate').addEventListener('change', () => { $('#fEnd').min = $('#fDate').value; });
+$('#btnDelete').addEventListener('click', () => { if (editingId) deleteEvent(editingId); });
+$$('[data-close]').forEach(b => b.addEventListener('click', closeDialog));
+let downOnBackdrop = false;
+dlg.addEventListener('mousedown', e => { downOnBackdrop = e.target === dlg; });
+dlg.addEventListener('mouseup', e => { if (downOnBackdrop && e.target === dlg) closeDialog(); downOnBackdrop = false; });
+
+$('#themeBtn').addEventListener('click', toggleTheme);
+$('#menuBtn').addEventListener('click', openSidebar);
+$('#scrim').addEventListener('click', closeSidebar);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSidebar(); });
+
+$('#importFile').addEventListener('change', e => {
+  const f = e.target.files && e.target.files[0];
+  if (f) importData(f);
+  e.target.value = '';
+});
+$('#resetHour').addEventListener('change', e => {
+  state.settings.resetHour = Number(e.target.value);
+  state.progress.dayKey = gameDayKey();   // 기준 시각을 바꿔도 현재 체크 상태는 유지
+  save(); renderTopbar();
+  toast(`매일 ${pad(state.settings.resetHour)}:00에 숙제가 초기화돼요`);
+});
+
+/* 다른 탭에서 변경되면 동기화 */
+window.addEventListener('storage', e => {
+  if (e.key !== STORE_KEY) return;
+  state = load();
+  ensureDayFresh();
+  document.body.dataset.filter = state.settings.filter;
+  applyTheme();
+  $('#resetHour').value = String(state.settings.resetHour);
+  renderAll();
+});
+
+/* 날짜가 바뀌었거나 일일 초기화 시각을 지나면 자동 갱신 */
+function tick() {
+  let changed = false;
+  const t = today();
+  if (t !== lastToday) { lastToday = t; changed = true; }
+  if (ensureDayFresh()) { save(); changed = true; }
+  if (changed) renderAll(); else renderTopbar();
+}
+setInterval(tick, 30000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+
+/* =====================================================================
+   시작
+   ===================================================================== */
+(function init() {
+  if (!state.settings.seeded) seed();
+  ensureDayFresh();
+  save();
+  document.body.dataset.filter = state.settings.filter;
+  applyTheme();
+  buildDialogControls();
+  renderAll();
+  replayAnim();
+})();
+
+})();
+</script>
+</body>
+</html>
